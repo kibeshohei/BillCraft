@@ -68,6 +68,16 @@ DB移行時はスキーマ設計を変えずに移行できるよう、ドメイ
 
 `/lesson` コマンドでも手動で記録できる。
 
+## 主要パッケージの選定理由
+
+| パッケージ | 用途・選定理由 |
+|---|---|
+| `next-auth` v5 (beta) | App Router 対応の認証ライブラリ。v5 から Server Actions と統合しやすい |
+| `mongoose` | MongoDB の ODM。スキーマ定義・バリデーション・型付けを担う |
+| `@react-pdf/renderer` | React コンポーネントとして PDF テンプレートを定義できる |
+| `bcryptjs` | パスワードハッシュ。純粋 JS 実装のため Vercel Edge でも動作する |
+| `zod` | TypeScript ファーストのバリデーション。Server Actions の入力検証に使う |
+
 ## 未確定事項
 
 - PDF出力のレイアウト・デザイン詳細
