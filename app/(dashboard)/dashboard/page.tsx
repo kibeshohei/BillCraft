@@ -1,28 +1,20 @@
-import { auth, signOut } from "@/auth"
-import { redirect } from "next/navigation"
+import Link from "next/link"
 
-export default async function DashboardPage() {
-  const session = await auth()
-  if (!session) redirect("/login")
-
+export default function DashboardPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="mb-2 text-2xl font-bold text-gray-900">ダッシュボード</h1>
-        <p className="mb-8 text-gray-500">ようこそ、{session.user?.name} さん</p>
-        <form
-          action={async () => {
-            "use server"
-            await signOut({ redirectTo: "/" })
-          }}
-        >
-          <button
-            type="submit"
-            className="rounded-lg bg-red-500 px-6 py-2 text-sm font-medium text-white hover:bg-red-600"
+    <div>
+      <h1 className="mb-6 text-xl font-bold text-gray-900">ダッシュボード</h1>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <p className="text-sm text-gray-500">請求書</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">0</p>
+          <Link
+            href="/invoices"
+            className="mt-3 inline-block text-sm text-blue-600 hover:underline"
           >
-            ログアウト
-          </button>
-        </form>
+            一覧を見る →
+          </Link>
+        </div>
       </div>
     </div>
   )
