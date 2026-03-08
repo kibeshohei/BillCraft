@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, models } from "mongoose"
+import mongoose, { Schema, model, Model } from "mongoose"
 
 export interface IUser {
   _id: mongoose.Types.ObjectId
@@ -32,6 +32,7 @@ const UserSchema = new Schema<IUser>(
   { timestamps: true }
 )
 
-const User = models.User || model<IUser>("User", UserSchema)
+const User: Model<IUser> =
+  (mongoose.models?.["User"] as Model<IUser>) ?? model<IUser>("User", UserSchema)
 
 export default User
