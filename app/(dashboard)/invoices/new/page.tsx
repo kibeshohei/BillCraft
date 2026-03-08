@@ -1,7 +1,6 @@
 "use client"
 
 import { useActionState, useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createInvoice, type InvoiceFormState } from "./actions"
 
@@ -19,12 +18,16 @@ function Field({
   type = "text",
   required,
   placeholder,
+  value,
+  onChange,
 }: {
   label: string
   name: string
   type?: string
   required?: boolean
   placeholder?: string
+  value: string
+  onChange: (v: string) => void
 }) {
   return (
     <div>
@@ -37,23 +40,57 @@ function Field({
         type={type}
         required={required}
         placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
       />
     </div>
   )
 }
 
-export default function NewInvoicePage() {
-  const router = useRouter()
-  const [state, action, isPending] = useActionState<InvoiceFormState, FormData>(createInvoice, {})
-  const [lineItems, setLineItems] = useState([{ id: 1 }])
+type LineItem = { id: number; name: string; quantity: string; unitPrice: string }
 
-  const addLineItem = () => setLineItems((prev) => [...prev, { id: Date.now() }])
+const today = new Date().toISOString().split("T")[0]
+
+const defaultForm = {
+  invoiceNumber: "",
+  issueDate: today,
+  dueDate: "",
+  clientName: "",
+  clientPersonName: "",
+  clientAddress: "",
+  senderName: "",
+  senderContact: "",
+  senderAddress: "",
+  bankName: "",
+  branchName: "",
+  accountType: "",
+  accountNumber: "",
+  accountHolder: "",
+  notes: "",
+  taxRate: "10",
+}
+
+export default function NewInvoicePage() {
+  const [state, action, isPending] = useActionState<InvoiceFormState, FormData>(createInvoice, {})
+  const [form, setForm] = useState(defaultForm)
+  const [lineItems, setLineItems] = useState<LineItem[]>([
+    { id: 1, name: "", quantity: "1", unitPrice: "" },
+  ])
+
+  const set = (key: keyof typeof defaultForm) => (v: string) =>
+    setForm((prev) => ({ ...prev, [key]: v }))
+
+  const addLineItem = () =>
+    setLineItems((prev) => [...prev, { id: Date.now(), name: "", quantity: "1", unitPrice: "" }])
+
   const removeLineItem = (id: number) =>
     setLineItems((prev) => prev.filter((item) => item.id !== id))
 
-  // 今日の日付をデフォルト値に
-  const today = new Date().toISOString().split("T")[0]
+  const updateLineItem = (id: number, field: keyof Omit<LineItem, "id">, value: string) =>
+    setLineItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+    )
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -69,7 +106,14 @@ export default function NewInvoicePage() {
         <div className="rounded-xl border border-gray-200 bg-white p-6">
           <SectionTitle>基本情報</SectionTitle>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Field label="請求書番号" name="invoiceNumber" required placeholder="INV-001" />
+            <Field
+              label="請求書番号"
+              name="invoiceNumber"
+              required
+              placeholder="INV-001"
+              value={form.invoiceNumber}
+              onChange={set("invoiceNumber")}
+            />
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 発行日<span className="ml-1 text-red-500">*</span>
@@ -78,7 +122,8 @@ export default function NewInvoicePage() {
                 name="issueDate"
                 type="date"
                 required
-                defaultValue={today}
+                value={form.issueDate}
+                onChange={(e) => set("issueDate")(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
@@ -90,6 +135,8 @@ export default function NewInvoicePage() {
                 name="dueDate"
                 type="date"
                 required
+                value={form.dueDate}
+                onChange={(e) => set("dueDate")(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
@@ -100,10 +147,29 @@ export default function NewInvoicePage() {
         <div className="rounded-xl border border-gray-200 bg-white p-6">
           <SectionTitle>請求先</SectionTitle>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="会社名 / 氏名" name="clientName" required placeholder="株式会社○○" />
-            <Field label="担当者名" name="clientPersonName" placeholder="山田 太郎 様" />
+            <Field
+              label="会社名 / 氏名"
+              name="clientName"
+              required
+              placeholder="株式会社○○"
+              value={form.clientName}
+              onChange={set("clientName")}
+            />
+            <Field
+              label="担当者名"
+              name="clientPersonName"
+              placeholder="山田 太郎 様"
+              value={form.clientPersonName}
+              onChange={set("clientPersonName")}
+            />
             <div className="sm:col-span-2">
-              <Field label="住所" name="clientAddress" placeholder="東京都渋谷区..." />
+              <Field
+                label="住所"
+                name="clientAddress"
+                placeholder="東京都渋谷区..."
+                value={form.clientAddress}
+                onChange={set("clientAddress")}
+              />
             </div>
           </div>
         </div>
@@ -112,10 +178,29 @@ export default function NewInvoicePage() {
         <div className="rounded-xl border border-gray-200 bg-white p-6">
           <SectionTitle>請求元</SectionTitle>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="氏名 / 屋号" name="senderName" required placeholder="山田 太郎" />
-            <Field label="連絡先" name="senderContact" placeholder="example@email.com" />
+            <Field
+              label="氏名 / 屋号"
+              name="senderName"
+              required
+              placeholder="山田 太郎"
+              value={form.senderName}
+              onChange={set("senderName")}
+            />
+            <Field
+              label="連絡先"
+              name="senderContact"
+              placeholder="example@email.com"
+              value={form.senderContact}
+              onChange={set("senderContact")}
+            />
             <div className="sm:col-span-2">
-              <Field label="住所" name="senderAddress" placeholder="東京都新宿区..." />
+              <Field
+                label="住所"
+                name="senderAddress"
+                placeholder="東京都新宿区..."
+                value={form.senderAddress}
+                onChange={set("senderAddress")}
+              />
             </div>
           </div>
         </div>
@@ -138,6 +223,8 @@ export default function NewInvoicePage() {
                     type="text"
                     required
                     placeholder={`品目 ${index + 1}`}
+                    value={item.name}
+                    onChange={(e) => updateLineItem(item.id, "name", e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
@@ -147,7 +234,8 @@ export default function NewInvoicePage() {
                     type="number"
                     required
                     min="1"
-                    defaultValue="1"
+                    value={item.quantity}
+                    onChange={(e) => updateLineItem(item.id, "quantity", e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right"
                   />
                 </div>
@@ -158,6 +246,8 @@ export default function NewInvoicePage() {
                     required
                     min="0"
                     placeholder="0"
+                    value={item.unitPrice}
+                    onChange={(e) => updateLineItem(item.id, "unitPrice", e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right"
                   />
                 </div>
@@ -191,9 +281,10 @@ export default function NewInvoicePage() {
                   <input
                     name="taxRate"
                     type="number"
-                    defaultValue="10"
                     min="0"
                     max="100"
+                    value={form.taxRate}
+                    onChange={(e) => set("taxRate")(e.target.value)}
                     className="w-14 rounded border border-gray-300 px-2 py-1 text-right text-sm"
                   />
                   <span>%</span>
@@ -207,12 +298,26 @@ export default function NewInvoicePage() {
         <div className="rounded-xl border border-gray-200 bg-white p-6">
           <SectionTitle>振込先口座</SectionTitle>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="銀行名" name="bankName" placeholder="○○銀行" />
-            <Field label="支店名" name="branchName" placeholder="渋谷支店" />
+            <Field
+              label="銀行名"
+              name="bankName"
+              placeholder="○○銀行"
+              value={form.bankName}
+              onChange={set("bankName")}
+            />
+            <Field
+              label="支店名"
+              name="branchName"
+              placeholder="渋谷支店"
+              value={form.branchName}
+              onChange={set("branchName")}
+            />
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">口座種別</label>
               <select
                 name="accountType"
+                value={form.accountType}
+                onChange={(e) => set("accountType")(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               >
                 <option value="">選択してください</option>
@@ -220,9 +325,21 @@ export default function NewInvoicePage() {
                 <option value="当座">当座</option>
               </select>
             </div>
-            <Field label="口座番号" name="accountNumber" placeholder="1234567" />
+            <Field
+              label="口座番号"
+              name="accountNumber"
+              placeholder="1234567"
+              value={form.accountNumber}
+              onChange={set("accountNumber")}
+            />
             <div className="sm:col-span-2">
-              <Field label="口座名義" name="accountHolder" placeholder="ヤマダ タロウ" />
+              <Field
+                label="口座名義"
+                name="accountHolder"
+                placeholder="ヤマダ タロウ"
+                value={form.accountHolder}
+                onChange={set("accountHolder")}
+              />
             </div>
           </div>
         </div>
@@ -234,6 +351,8 @@ export default function NewInvoicePage() {
             name="notes"
             rows={3}
             placeholder="お振込の際は手数料をご負担ください。"
+            value={form.notes}
+            onChange={(e) => set("notes")(e.target.value)}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
         </div>

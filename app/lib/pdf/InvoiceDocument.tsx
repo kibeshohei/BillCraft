@@ -6,19 +6,33 @@ import {
   StyleSheet,
   Font,
 } from "@react-pdf/renderer"
+import path from "path"
 import type { IInvoice } from "@/app/lib/models/Invoice"
 
-// 日本語フォントは未登録のためシステムフォントにフォールバック
+Font.register({
+  family: "NotoSansJP",
+  fonts: [
+    {
+      src: path.join(process.cwd(), "public/fonts/NotoSansJP-Regular.ttf"),
+      fontWeight: 400,
+    },
+    {
+      src: path.join(process.cwd(), "public/fonts/NotoSansJP-Regular.ttf"),
+      fontWeight: 700,
+    },
+  ],
+})
+
 const styles = StyleSheet.create({
   page: {
     padding: 40,
     fontSize: 10,
-    fontFamily: "Helvetica",
+    fontFamily: "NotoSansJP",
     color: "#1a1a1a",
   },
   title: {
     fontSize: 20,
-    fontFamily: "Helvetica-Bold",
+    fontWeight: 700,
     marginBottom: 20,
     textAlign: "center",
   },
@@ -34,8 +48,7 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: "#888",
     marginBottom: 2,
-    fontFamily: "Helvetica-Bold",
-    textTransform: "uppercase",
+    fontWeight: 700,
   },
   value: {
     fontSize: 10,
@@ -46,12 +59,11 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e5e5e5",
     marginBottom: 12,
   },
-  // 明細テーブル
   tableHeader: {
     flexDirection: "row",
     backgroundColor: "#f5f5f5",
     padding: "6 8",
-    fontFamily: "Helvetica-Bold",
+    fontWeight: 700,
     fontSize: 9,
   },
   tableRow: {
@@ -64,7 +76,6 @@ const styles = StyleSheet.create({
   colQty: { flex: 1, textAlign: "right" },
   colPrice: { flex: 2, textAlign: "right" },
   colAmount: { flex: 2, textAlign: "right" },
-  // 合計
   totals: {
     marginTop: 8,
     alignItems: "flex-end",
@@ -86,22 +97,20 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     marginTop: 2,
   },
-  grandTotalLabel: { flex: 1, fontFamily: "Helvetica-Bold", fontSize: 10 },
+  grandTotalLabel: { flex: 1, fontWeight: 700, fontSize: 10 },
   grandTotalValue: {
     width: 80,
     textAlign: "right",
-    fontFamily: "Helvetica-Bold",
+    fontWeight: 700,
     fontSize: 12,
   },
-  // 振込先・備考
   section: {
     marginTop: 20,
   },
   sectionTitle: {
     fontSize: 9,
-    fontFamily: "Helvetica-Bold",
+    fontWeight: 700,
     color: "#888",
-    textTransform: "uppercase",
     marginBottom: 6,
     borderBottomWidth: 1,
     borderBottomColor: "#e5e5e5",
@@ -136,20 +145,20 @@ export default function InvoiceDocument({ invoice }: Props) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>Invoice</Text>
+        <Text style={styles.title}>請求書</Text>
 
         {/* 請求番号・日付 */}
         <View style={styles.row}>
           <View style={styles.box}>
-            <Text style={styles.label}>Invoice No.</Text>
+            <Text style={styles.label}>請求書番号</Text>
             <Text style={styles.value}>{invoice.invoiceNumber}</Text>
-            <Text style={styles.label}>Issue Date</Text>
+            <Text style={styles.label}>発行日</Text>
             <Text style={styles.value}>{formatDate(invoice.issueDate)}</Text>
-            <Text style={styles.label}>Due Date</Text>
+            <Text style={styles.label}>支払期限</Text>
             <Text style={styles.value}>{formatDate(invoice.dueDate)}</Text>
           </View>
           <View style={styles.box}>
-            <Text style={styles.label}>From</Text>
+            <Text style={styles.label}>請求元</Text>
             <Text style={styles.value}>{invoice.senderName}</Text>
             {invoice.senderAddress && (
               <Text style={styles.value}>{invoice.senderAddress}</Text>
@@ -162,7 +171,7 @@ export default function InvoiceDocument({ invoice }: Props) {
 
         {/* 請求先 */}
         <View style={{ marginBottom: 20 }}>
-          <Text style={styles.label}>Bill To</Text>
+          <Text style={styles.label}>請求先</Text>
           <Text style={styles.value}>{invoice.clientName}</Text>
           {invoice.clientPersonName && (
             <Text style={styles.value}>{invoice.clientPersonName}</Text>
@@ -176,10 +185,10 @@ export default function InvoiceDocument({ invoice }: Props) {
 
         {/* 明細テーブル */}
         <View style={styles.tableHeader}>
-          <Text style={styles.colName}>Description</Text>
-          <Text style={styles.colQty}>Qty</Text>
-          <Text style={styles.colPrice}>Unit Price</Text>
-          <Text style={styles.colAmount}>Amount</Text>
+          <Text style={styles.colName}>品目</Text>
+          <Text style={styles.colQty}>数量</Text>
+          <Text style={styles.colPrice}>単価</Text>
+          <Text style={styles.colAmount}>金額</Text>
         </View>
         {invoice.lineItems.map((item, i) => (
           <View key={i} style={styles.tableRow}>
@@ -195,15 +204,15 @@ export default function InvoiceDocument({ invoice }: Props) {
         {/* 合計 */}
         <View style={styles.totals}>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Subtotal</Text>
+            <Text style={styles.totalLabel}>小計</Text>
             <Text style={styles.totalValue}>{formatCurrency(subtotal)}</Text>
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Tax ({invoice.taxRate}%)</Text>
+            <Text style={styles.totalLabel}>消費税（{invoice.taxRate}%）</Text>
             <Text style={styles.totalValue}>{formatCurrency(tax)}</Text>
           </View>
           <View style={styles.grandTotalRow}>
-            <Text style={styles.grandTotalLabel}>Total</Text>
+            <Text style={styles.grandTotalLabel}>合計</Text>
             <Text style={styles.grandTotalValue}>{formatCurrency(total)}</Text>
           </View>
         </View>
@@ -211,7 +220,7 @@ export default function InvoiceDocument({ invoice }: Props) {
         {/* 振込先 */}
         {invoice.bankName && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Bank Account</Text>
+            <Text style={styles.sectionTitle}>振込先</Text>
             <Text style={styles.value}>
               {invoice.bankName}
               {invoice.branchName ? ` ${invoice.branchName}` : ""}
@@ -227,7 +236,7 @@ export default function InvoiceDocument({ invoice }: Props) {
         {/* 備考 */}
         {invoice.notes && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Notes</Text>
+            <Text style={styles.sectionTitle}>備考</Text>
             <Text style={styles.value}>{invoice.notes}</Text>
           </View>
         )}

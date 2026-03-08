@@ -49,6 +49,22 @@
 **解決策**: `parsed.error.errors[0].message` → `parsed.error.issues[0].message` に変更
 **今後**: Zod のエラー取得は `.issues` を使う
 
+## 2026-03-09: NextAuth v5 で session.user.id が undefined になる
+
+**状況**: 請求書保存 Server Action で session.user.id を MongoDB の userId に設定
+**問題**: `Invoice validation failed: userId: Path 'userId' is required.`
+**原因**: NextAuth v5 は authorize() で返した id を自動的に JWT/session に含めない。callbacks で明示的に引き渡す必要がある
+**解決策**: auth.ts に callbacks を追加し、jwt で token.id を設定、session で session.user.id に代入する
+**今後**: NextAuth でユーザー ID をセッションから使う場合は必ず callbacks を設定する。また修正後は再ログインが必要（古いトークンには id が入っていないため）
+
+## 2026-03-09: @react-pdf/renderer で日本語が文字化けする
+
+**状況**: PDF に日本語テキストを出力しようとした
+**問題**: デフォルトフォント（Helvetica）は日本語非対応のため文字化け
+**原因**: @react-pdf/renderer は日本語フォントを内蔵していない
+**解決策**: Noto Sans JP の TTF ファイルを `public/fonts/` に配置し、`Font.register()` で登録後に `fontFamily: "NotoSansJP"` を指定する
+**今後**: 日本語 PDF を出力する場合は必ず日本語フォントを登録する
+
 ## 2026-03-09: redirect() を try/catch 内で使うと catch に引っかかる
 
 **状況**: 請求書保存 Server Action で DB 保存後に redirect() を呼んだ
