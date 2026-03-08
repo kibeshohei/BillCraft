@@ -48,3 +48,11 @@
 **原因**: Zod v4 で API が変更され、`.errors` が `.issues` に名称変更された
 **解決策**: `parsed.error.errors[0].message` → `parsed.error.issues[0].message` に変更
 **今後**: Zod のエラー取得は `.issues` を使う
+
+## 2026-03-09: redirect() を try/catch 内で使うと catch に引っかかる
+
+**状況**: 請求書保存 Server Action で DB 保存後に redirect() を呼んだ
+**問題**: 「請求書の保存に失敗しました」エラーになり保存できない
+**原因**: Next.js の redirect() は内部的に NEXT_REDIRECT エラーを throw する仕組みのため、try/catch に捕捉されてしまう
+**解決策**: redirect() を try/catch の外に出す。保存した ID を変数に受け取り、catch の外で redirect する
+**今後**: Server Action で redirect() は必ず try/catch の外で呼ぶ

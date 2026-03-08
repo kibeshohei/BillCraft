@@ -78,6 +78,7 @@ export async function createInvoice(
     return { error: parsed.error.issues[0].message }
   }
 
+  let invoiceId: string
   try {
     await connectDB()
     const invoice = await Invoice.create({
@@ -86,8 +87,10 @@ export async function createInvoice(
       issueDate: new Date(parsed.data.issueDate),
       dueDate: new Date(parsed.data.dueDate),
     })
-    redirect(`/invoices/${invoice._id}`)
+    invoiceId = invoice._id.toString()
   } catch {
     return { error: "請求書の保存に失敗しました" }
   }
+
+  redirect(`/invoices/${invoiceId}`)
 }
