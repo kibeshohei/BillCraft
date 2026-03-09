@@ -72,3 +72,11 @@
 **原因**: Next.js の redirect() は内部的に NEXT_REDIRECT エラーを throw する仕組みのため、try/catch に捕捉されてしまう
 **解決策**: redirect() を try/catch の外に出す。保存した ID を変数に受け取り、catch の外で redirect する
 **今後**: Server Action で redirect() は必ず try/catch の外で呼ぶ
+
+## 2026-03-09: MongoDBドキュメントをClient Componentに渡すとエラー
+
+**状況**: 請求書編集ページ（Server Component）でDBから取得したデータをClient Componentに渡そうとした
+**問題**: `Only plain objects can be passed to Client Components from Server Components` エラー
+**原因**: MongoDBの`.lean()`で取得したドキュメントは、Mongoose Document オブジェクトで、toJSONメソッドを持つためそのままではClient Componentに渡せない
+**解決策**: `JSON.parse(JSON.stringify(invoice))` でPlain Objectに変換してから渡す
+**今後**: Server ComponentからClient Componentにデータを渡す場合は、必ずPlain Objectに変換する

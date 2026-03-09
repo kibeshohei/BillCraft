@@ -1,8 +1,9 @@
 "use client"
 
-import { useActionState, useState } from "react"
+import { useActionState, useState, useEffect } from "react"
 import Link from "next/link"
-import { createInvoice, type InvoiceFormState } from "./actions"
+import { useRouter } from "next/navigation"
+import { updateInvoice, type InvoiceFormState } from "./actions"
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
@@ -50,35 +51,90 @@ function Field({
 
 type LineItem = { id: number; name: string; quantity: string; unitPrice: string }
 
-const today = new Date().toISOString().split("T")[0]
-
-const defaultForm = {
-  invoiceNumber: "",
-  issueDate: today,
-  dueDate: "",
-  clientName: "",
-  clientPersonName: "",
-  clientAddress: "",
-  senderName: "",
-  senderContact: "",
-  senderAddress: "",
-  bankName: "",
-  branchName: "",
-  accountType: "",
-  accountNumber: "",
-  accountHolder: "",
-  notes: "",
-  taxRate: "10",
+type FormData = {
+  invoiceNumber: string
+  issueDate: string
+  dueDate: string
+  clientName: string
+  clientPersonName: string
+  clientAddress: string
+  senderName: string
+  senderContact: string
+  senderAddress: string
+  bankName: string
+  branchName: string
+  accountType: string
+  accountNumber: string
+  accountHolder: string
+  notes: string
+  taxRate: string
 }
 
-export default function NewInvoicePage() {
-  const [state, action, isPending] = useActionState<InvoiceFormState, FormData>(createInvoice, {})
-  const [form, setForm] = useState(defaultForm)
-  const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: 1, name: "", quantity: "1", unitPrice: "" },
-  ])
+interface Props {
+  invoice: {
+    _id: string
+    invoiceNumber: string
+    issueDate: string
+    dueDate: string
+    clientName: string
+    clientPersonName?: string
+    clientAddress?: string
+    senderName: string
+    senderContact?: string
+    senderAddress?: string
+    bankName?: string
+    branchName?: string
+    accountType?: string
+    accountNumber?: string
+    accountHolder?: string
+    notes?: string
+    taxRate: number
+    lineItems: { name: string; quantity: number; unitPrice: number }[]
+  }
+}
 
-  const set = (key: keyof typeof defaultForm) => (v: string) =>
+export function EditInvoiceForm({ invoice }: Props) {
+  const router = useRouter()
+  const [state, action, isPending] = useActionState<InvoiceFormState, FormData>(
+    updateInvoice.bind(null, invoice._id),
+    {}
+  )
+
+  const [form, setForm] = useState<FormData>({
+    invoiceNumber: invoice.invoiceNumber,
+    issueDate: new Date(invoice.issueDate).toISOString().split("T")[0],
+    dueDate: new Date(invoice.dueDate).toISOString().split("T")[0],
+    clientName: invoice.clientName,
+    clientPersonName: invoice.clientPersonName || "",
+    clientAddress: invoice.clientAddress || "",
+    senderName: invoice.senderName,
+    senderContact: invoice.senderContact || "",
+    senderAddress: invoice.senderAddress || "",
+    bankName: invoice.bankName || "",
+    branchName: invoice.branchName || "",
+    accountType: invoice.accountType || "",
+    accountNumber: invoice.accountNumber || "",
+    accountHolder: invoice.accountHolder || "",
+    notes: invoice.notes || "",
+    taxRate: String(invoice.taxRate),
+  })
+
+  const [lineItems, setLineItems] = useState<LineItem[]>(
+    invoice.lineItems.map((item, i) => ({
+      id: i,
+      name: item.name,
+      quantity: String(item.quantity),
+      unitPrice: String(item.unitPrice),
+    }))
+  )
+
+  useEffect(() => {
+    if (state.success) {
+      router.push(`/invoices/${invoice._id}`)
+    }
+  }, [state.success, router, invoice._id])
+
+  const set = (key: keyof FormData) => (v: string) =>
     setForm((prev) => ({ ...prev, [key]: v }))
 
   const addLineItem = () =>
@@ -95,9 +151,9 @@ export default function NewInvoicePage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">請求書を作成</h1>
-        <Link href="/invoices" className="text-sm text-gray-500 hover:text-gray-700">
-          ← 一覧に戻る
+        <h1 className="text-xl font-bold text-gray-900">請求書を編集</h1>
+        <Link href={`/invoices/${invoice._id}`} className="text-sm text-gray-500 hover:text-gray-700">
+          ← 詳細に戻る
         </Link>
       </div>
 
@@ -236,7 +292,7 @@ export default function NewInvoicePage() {
                     min="1"
                     value={item.quantity}
                     onChange={(e) => updateLineItem(item.id, "quantity", e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right"
                   />
                 </div>
                 <div className="col-span-3">
@@ -248,7 +304,7 @@ export default function NewInvoicePage() {
                     placeholder="0"
                     value={item.unitPrice}
                     onChange={(e) => updateLineItem(item.id, "unitPrice", e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right"
                   />
                 </div>
                 <div className="col-span-1 flex items-center justify-center">
@@ -285,7 +341,7 @@ export default function NewInvoicePage() {
                     max="100"
                     value={form.taxRate}
                     onChange={(e) => set("taxRate")(e.target.value)}
-                    className="w-14 rounded border border-gray-300 px-2 py-1 text-right text-sm"
+                    className="w-14 rounded border border-gray-300 px-2 py-1 text-right text-sm text-gray-900"
                   />
                   <span>%</span>
                 </div>
@@ -350,7 +406,7 @@ export default function NewInvoicePage() {
           <textarea
             name="notes"
             rows={3}
-            placeholder="お振込の際は手数料をご負担ください。"
+            placeholder="お振込する際は手数料をご負担ください。"
             value={form.notes}
             onChange={(e) => set("notes")(e.target.value)}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -363,7 +419,7 @@ export default function NewInvoicePage() {
 
         <div className="flex justify-end gap-3">
           <Link
-            href="/invoices"
+            href={`/invoices/${invoice._id}`}
             className="rounded-lg border border-gray-300 px-5 py-2 text-sm text-gray-700 hover:bg-gray-50"
           >
             キャンセル
@@ -373,7 +429,7 @@ export default function NewInvoicePage() {
             disabled={isPending}
             className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {isPending ? "保存中..." : "請求書を保存"}
+            {isPending ? "保存中..." : "変更を保存"}
           </button>
         </div>
       </form>

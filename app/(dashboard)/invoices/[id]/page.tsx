@@ -3,6 +3,7 @@ import { connectDB } from "@/app/lib/db"
 import Invoice from "@/app/lib/models/Invoice"
 import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
+import { DeleteButton } from "./DeleteButton"
 
 function formatCurrency(amount: number) {
   return `¥${amount.toLocaleString("ja-JP")}`
@@ -50,6 +51,12 @@ export default async function InvoiceDetailPage({
           >
             ← 一覧に戻る
           </Link>
+          <Link
+            href={`/invoices/${id}/edit`}
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            編集
+          </Link>
           <a
             href={`/api/invoices/${id}/pdf`}
             target="_blank"
@@ -57,6 +64,7 @@ export default async function InvoiceDetailPage({
           >
             PDFをダウンロード
           </a>
+          <DeleteButton id={id} />
         </div>
       </div>
 
@@ -65,11 +73,11 @@ export default async function InvoiceDetailPage({
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div>
             <p className="text-xs text-gray-500">発行日</p>
-            <p className="mt-1 font-medium">{formatDate(invoice.issueDate)}</p>
+            <p className="mt-1 font-medium text-gray-900">{formatDate(invoice.issueDate)}</p>
           </div>
           <div>
             <p className="text-xs text-gray-500">支払期限</p>
-            <p className="mt-1 font-medium">{formatDate(invoice.dueDate)}</p>
+            <p className="mt-1 font-medium text-gray-900">{formatDate(invoice.dueDate)}</p>
           </div>
         </div>
 
@@ -79,15 +87,15 @@ export default async function InvoiceDetailPage({
         <div className="grid grid-cols-2 gap-6 text-sm">
           <div>
             <p className="mb-1 text-xs font-semibold text-gray-500 uppercase">請求先</p>
-            <p className="font-medium">{invoice.clientName}</p>
-            {invoice.clientPersonName && <p className="text-gray-600">{invoice.clientPersonName}</p>}
-            {invoice.clientAddress && <p className="text-gray-600">{invoice.clientAddress}</p>}
+            <p className="font-medium text-gray-900">{invoice.clientName}</p>
+            {invoice.clientPersonName && <p className="text-gray-700">{invoice.clientPersonName}</p>}
+            {invoice.clientAddress && <p className="text-gray-700">{invoice.clientAddress}</p>}
           </div>
           <div>
             <p className="mb-1 text-xs font-semibold text-gray-500 uppercase">請求元</p>
-            <p className="font-medium">{invoice.senderName}</p>
-            {invoice.senderAddress && <p className="text-gray-600">{invoice.senderAddress}</p>}
-            {invoice.senderContact && <p className="text-gray-600">{invoice.senderContact}</p>}
+            <p className="font-medium text-gray-900">{invoice.senderName}</p>
+            {invoice.senderAddress && <p className="text-gray-700">{invoice.senderAddress}</p>}
+            {invoice.senderContact && <p className="text-gray-700">{invoice.senderContact}</p>}
           </div>
         </div>
 
@@ -117,16 +125,16 @@ export default async function InvoiceDetailPage({
           </table>
           <div className="mt-3 flex flex-col items-end gap-1 text-sm">
             <div className="flex w-44 justify-between">
-              <span className="text-gray-500">小計</span>
-              <span>{formatCurrency(subtotal)}</span>
+              <span className="text-gray-700">小計</span>
+              <span className="text-gray-900">{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex w-44 justify-between">
-              <span className="text-gray-500">消費税（{invoice.taxRate}%）</span>
-              <span>{formatCurrency(tax)}</span>
+              <span className="text-gray-700">消費税（{invoice.taxRate}%）</span>
+              <span className="text-gray-900">{formatCurrency(tax)}</span>
             </div>
             <div className="flex w-44 justify-between border-t border-gray-200 pt-2 font-bold">
-              <span>合計</span>
-              <span className="text-lg">{formatCurrency(total)}</span>
+              <span className="text-gray-900">合計</span>
+              <span className="text-lg text-gray-900">{formatCurrency(total)}</span>
             </div>
           </div>
         </div>
@@ -137,8 +145,8 @@ export default async function InvoiceDetailPage({
             <hr className="border-gray-100" />
             <div className="text-sm">
               <p className="mb-2 text-xs font-semibold text-gray-500 uppercase">振込先</p>
-              <p>{invoice.bankName} {invoice.branchName} {invoice.accountType} {invoice.accountNumber}</p>
-              {invoice.accountHolder && <p className="text-gray-600">{invoice.accountHolder}</p>}
+              <p className="text-gray-900">{invoice.bankName} {invoice.branchName} {invoice.accountType} {invoice.accountNumber}</p>
+              {invoice.accountHolder && <p className="text-gray-700">{invoice.accountHolder}</p>}
             </div>
           </>
         )}
@@ -149,7 +157,7 @@ export default async function InvoiceDetailPage({
             <hr className="border-gray-100" />
             <div className="text-sm">
               <p className="mb-2 text-xs font-semibold text-gray-500 uppercase">備考</p>
-              <p className="text-gray-600">{invoice.notes}</p>
+              <p className="text-gray-700">{invoice.notes}</p>
             </div>
           </>
         )}
